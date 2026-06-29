@@ -1,0 +1,15 @@
+\section{Experimental Database}
+
+The Skolkovo Anomaly Benchmark (SKAB) is a real-world multivariate time-series dataset developed by the Skolkovo Institute of Science and Technology to support anomaly detection research in industrial settings \cite{skab_reference}. Collected from a valve control system operating under actual conditions, SKAB provides high-fidelity sensor data with realistic fault behaviors, making it a valuable alternative to synthetic datasets for evaluating anomaly detection algorithms.
+
+The dataset consists of 35 CSV files organized into four folders: \texttt{valve1}, \texttt{valve2}, \texttt{anomaly-free}, and \texttt{other}. The \texttt{valve1} folder includes 16 files capturing various mechanical, electrical, and control-related failures, while the \texttt{valve2} folder contains 4 files reflecting distinct fault scenarios. The \texttt{anomaly-free} folder provides baseline data for normal operations, and the \texttt{other} folder contributes 14 additional sequences to diversify anomaly contexts. In total, the dataset spans approximately 25–30 hours of continuous system monitoring.
+
+\begin{figure}[H]
+\centerline{\includegraphics[width=0.9\textwidth]{./figures/ACCELEROMETER_ONLY_valve2_0.csv_HIGH_RESs.pdf}} 
+\caption{Accelerometer RMS time series from SKAB valve2\_0.csv showing normal operational patterns (blue) and anomalous behavior (red) across dual sensor channels, demonstrating the dataset's realistic fault characteristics.}
+\label{fig:accelerometer_data}
+\end{figure}
+
+Sensor data are sampled at 1 Hz across eight channels, including vibration (Accelerometer1RMS, Accelerometer2RMS), pressure, temperature, current, thermocouple, voltage, and volume flow rate. Each observation is timestamped and labeled with a binary anomaly indicator (0 = normal, 1 = anomalous) along with change-point markers that denote the onset of faults. Expert-annotated labels enable precise evaluation of both point anomalies and gradual drifts.
+
+SKAB is notable for its over 99\% data completeness, minimal noise, and negligible missing values (handled via forward-fill), ensuring reliability for sensitive temporal modeling. The dataset addresses key industrial challenges such as label scarcity and class imbalance, and includes complex, subtle fault patterns that test a model's robustness and generalization capabilities. These properties make SKAB an appropriate testbed for validating real-time, spatiotemporal, and intent-aware anomaly detection models such as GTiS-Net. 

@@ -1,0 +1,192 @@
+\documentclass[conference]{IEEEtran}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{url}
+
+\begin{document}
+
+\title{GTiS-Net: Graph-based Temporal and Spatial Anomaly Detection with Intent-Based System}
+
+\author{GTiS-Net Architecture Pseudocode}
+
+\maketitle
+
+\begin{abstract}
+This document presents the complete pseudocode for GTiS-Net, a graph-based temporal and spatial anomaly detection system with Intent-Based System (IBS) integration for industrial IoT applications.
+\end{abstract}
+
+\section{GTiS-Net Complete Workflow Pseudocode}
+
+\begin{algorithm}[H]
+\caption{GTiS-Net Complete Workflow with IBS Integration}
+\begin{algorithmic}[1]
+\REQUIRE Dataset $D$, Configuration $C$, IBS Parameters $I$
+\ENSURE Trained model $M$, Evaluation results $R$, IBS system $S$
+
+\STATE \textbf{Initialize:} Set random seeds, create output directories
+\STATE \textbf{Load configuration:} $C \leftarrow \{window\_size, batch\_size, correlation\_threshold, \ldots\}$
+
+\STATE \textbf{STEP 1: Data Preprocessing}
+\FOR{each file $f$ in dataset $D$}
+    \STATE Load sensor data: $X \leftarrow load\_csv(f)$
+    \STATE Normalize features: $X_{norm} \leftarrow normalize(X)$
+    \STATE Create sliding windows: $W \leftarrow create\_windows(X_{norm}, C.window\_size, C.stride)$
+    \FOR{each window $w$ in $W$}
+        \STATE Compute node features: $F \leftarrow \{mean(w), std(w), gradient(w)\}$
+        \STATE Build correlation graph: $G \leftarrow build\_graph(w, C.correlation\_threshold)$
+        \STATE Convert to edge indices: $E \leftarrow adj\_matrix\_to\_edge\_index(G)$
+        \STATE Store batch: $B \leftarrow \{F, E, label(w)\}$
+    \ENDFOR
+\ENDFOR
+
+\STATE \textbf{STEP 2: SSL Pre-training}
+\STATE Initialize TAC component: $TAC \leftarrow TACComponent(input\_dim=8, hidden\_dim=64)$
+\STATE Initialize GAT component: $GAT \leftarrow GATComponent(input\_dim=3, heads=[4,2,1])$
+\STATE Initialize fusion: $Fusion \leftarrow CrossAttentionFusion(hidden\_dim=64)$
+\STATE Create GTiS-Net: $M_{ssl} \leftarrow GTiSNet(TAC, GAT, Fusion)$
+
+\FOR{epoch $e = 1$ to $C.ssl\_epochs$}
+    \FOR{each batch $B$ in training data}
+        \STATE Forward pass: $output \leftarrow M_{ssl}(B)$
+        \STATE Compute SSL loss: $L_{ssl} \leftarrow masked\_sensor\_prediction\_loss(output, B)$
+        \STATE Backward pass: $\nabla L_{ssl} \leftarrow backward(L_{ssl})$
+        \STATE Update weights: $M_{ssl} \leftarrow optimizer.step()$
+    \ENDFOR
+    \IF{early\_stopping\_condition}
+        \STATE Break
+    \ENDIF
+\ENDFOR
+
+\STATE \textbf{STEP 3: Supervised Fine-tuning}
+\FOR{each label ratio $r$ in $C.label\_ratios$}
+    \STATE Load pre-trained model: $M_{supervised} \leftarrow load\_weights(M_{ssl})$
+    \STATE Sample labeled data: $D_{labeled} \leftarrow sample(D, ratio=r)$
+    \FOR{epoch $e = 1$ to $C.sl\_epochs$}
+        \FOR{each batch $B$ in $D_{labeled}$}
+            \STATE Forward pass: $output \leftarrow M_{supervised}(B)$
+            \STATE Compute supervised loss: $L_{supervised} \leftarrow binary\_cross\_entropy(output, B.label)$
+            \STATE Backward pass: $\nabla L_{supervised} \leftarrow backward(L_{supervised})$
+            \STATE Update weights: $M_{supervised} \leftarrow optimizer.step()$
+        \ENDFOR
+    \ENDFOR
+    \STATE Save model: $save(M_{supervised}, f"supervised\_model\_{r*100}pct.pt")$
+\ENDFOR
+
+\STATE \textbf{STEP 4: Model Evaluation}
+\FOR{each trained model $M$}
+    \STATE Load model: $M \leftarrow load\_model(M.path)$
+    \STATE Evaluate on test set: $predictions \leftarrow M(test\_data)$
+    \STATE Compute metrics: $\{accuracy, precision, recall, f1\} \leftarrow compute\_metrics(predictions, test\_labels)$
+    \STATE Generate ROC curve: $roc\_curve \leftarrow compute\_roc(predictions, test\_labels)$
+    \STATE Save results: $save\_results(metrics, roc\_curve)$
+\ENDFOR
+
+\STATE \textbf{STEP 5: IBS Integration}
+\STATE Initialize IBS components:
+\STATE $AlertManager \leftarrow AnomalyControlAction(I.sms\_config)$
+\STATE $PerformanceMonitor \leftarrow AnomalyEvaluation()$
+\STATE $FeedbackTracker \leftarrow AnomalyFeedback()$
+\STATE $PolicyControl \leftarrow PolicyControl(I.policy)$
+\STATE $DeploymentManager \leftarrow DeploymentManager(I.deployment)$
+
+\STATE Create IBS system: $S \leftarrow GTISNetWithIBS(M_{best}, AlertManager, PerformanceMonitor, FeedbackTracker, PolicyControl, DeploymentManager)$
+
+\STATE \textbf{Real-time Processing Loop}
+\FOR{each incoming data window $w$}
+    \STATE Preprocess window: $w_{processed} \leftarrow preprocess(w)$
+    \STATE Detect anomaly: $result \leftarrow S.process\_data(w_{processed})$
+    \IF{$result.is\_anomaly$}
+        \STATE Send SMS alert: $success \leftarrow AlertManager.send\_notification(result)$
+        \STATE Log feedback: $FeedbackTracker.log\_feedback(result, success)$
+        \STATE Update threshold: $S.threshold \leftarrow PolicyControl.evaluate\_policy(result, feedback)$
+    \ENDIF
+    \STATE Monitor performance: $PerformanceMonitor.evaluate\_detection()$
+\ENDFOR
+
+\RETURN $\{M_{best}, R, S\}$
+\end{algorithmic}
+\end{algorithm}
+
+\begin{algorithm}[H]
+\caption{GTiS-Net Model Architecture}
+\begin{algorithmic}[1]
+\REQUIRE Input batch $B = \{node\_features, edge\_index, labels\}$
+\ENSURE Anomaly score $s \in [0,1]$
+
+\STATE \textbf{Temporal Attention Convolution (TAC) Component}
+\STATE Input: $X_{temporal} \leftarrow B.node\_features$ (shape: $[batch, sensors, seq\_len]$)
+\STATE Apply causal conv1: $X_1 \leftarrow CausalConv1d(X_{temporal}, dilation=1)$
+\STATE Apply attention: $X_1 \leftarrow SimpleAttentionBlock(X_1)$
+\STATE Apply causal conv2: $X_2 \leftarrow CausalConv1d(X_1, dilation=4)$
+\STATE Apply causal conv3: $X_3 \leftarrow CausalConv1d(X_2, dilation=16)$
+\STATE Add residual: $X_{temporal\_out} \leftarrow ResidualBlock(X_3) + X_1$
+
+\STATE \textbf{Graph Attention (GAT) Component}
+\STATE Input: $X_{spatial} \leftarrow compute\_enhanced\_features(B.window)$
+\STATE Apply GAT layer 1: $H_1 \leftarrow GATConv(X_{spatial}, B.edge\_index, heads=4)$
+\STATE Apply GAT layer 2: $H_2 \leftarrow GATConv(H_1, B.edge\_index, heads=2)$
+\STATE Apply GAT layer 3: $H_3 \leftarrow GATConv(H_2, B.edge\_index, heads=1)$
+\STATE Global pooling: $X_{spatial\_out} \leftarrow global\_mean\_pool(H_3)$
+
+\STATE \textbf{Cross-Attention Fusion}
+\STATE Compute attention weights: $A \leftarrow softmax(\frac{QK^T}{\sqrt{d_k}})$
+\STATE Fuse representations: $X_{fused} \leftarrow CrossAttention(TAC_{out}, GAT_{out})$
+\STATE Apply final MLP: $X_{final} \leftarrow MLP(X_{fused})$
+\STATE Output: $s \leftarrow sigmoid(X_{final})$
+
+\RETURN $s$
+\end{algorithmic}
+\end{algorithm}
+
+\begin{algorithm}[H]
+\caption{IBS Adaptive Response Module}
+\begin{algorithmic}[1]
+\REQUIRE Anomaly score $s$, Threshold $\theta$, IBS config $I$
+\ENSURE Alert status, Updated threshold
+
+\STATE \textbf{Alert Management}
+\IF{$s > \theta$}
+    \STATE Create alert: $alert \leftarrow \{timestamp, score, severity, context\}$
+    \STATE Send SMS: $sms\_success \leftarrow send\_twilio\_sms(alert)$
+    \IF{$\neg sms\_success$}
+        \STATE Send email: $email\_success \leftarrow send\_email\_notification(alert)$
+    \ENDIF
+    \STATE Log alert: $log\_alert(alert, sms\_success \lor email\_success)$
+\ENDIF
+
+\STATE \textbf{Performance Monitoring}
+\STATE Calculate KPIs: $\{FAR, MAR, response\_time\} \leftarrow compute\_kpis()$
+\STATE Update metrics: $update\_performance\_metrics(FAR, MAR, response\_time)$
+
+\STATE \textbf{Response Tracking}
+\STATE Log detection: $log\_detection(s, \theta, alert\_sent)$
+\STATE Track response: $track\_operator\_response(alert\_id)$
+\STATE Update feedback: $update\_feedback\_loop()$
+
+\STATE \textbf{Threshold Adaptation}
+\STATE Analyze trends: $\{far\_trend, mar\_trend\} \leftarrow analyze\_performance\_trends()$
+\IF{$FAR > 0.20$}
+    \STATE Increase threshold: $\theta \leftarrow \theta + 0.05$
+\ELSIF{$FAR < 0.05 \land MAR > 0.15$}
+    \STATE Decrease threshold: $\theta \leftarrow \theta - 0.05$
+\ENDIF
+\STATE Apply safeguards: $\theta \leftarrow clamp(\theta, 0.1, 0.9)$
+
+\RETURN $\{alert\_status, \theta\}$
+\end{algorithmic}
+\end{algorithm}
+
+\section{Key Components}
+
+\textbf{TAC Component:} Multi-scale temporal feature extraction using causal convolutions with attention mechanisms.
+
+\textbf{GAT Component:} Spatial relationship modeling through graph attention networks with multi-head attention.
+
+\textbf{Cross-Attention Fusion:} Dynamic integration of temporal and spatial representations using attention-based fusion.
+
+\textbf{IBS Module:} Adaptive response system with alert management, performance monitoring, response tracking, and threshold adaptation.
+
+\end{document} 

@@ -1,0 +1,19 @@
+\section{Experimental Database}
+
+The Skolkovo Anomaly Benchmark (SKAB) is a real-world multivariate time-series dataset developed by the Skolkovo Institute of Science and Technology to support anomaly detection research in industrial settings. Collected from a valve control system operating under actual conditions, SKAB provides high-fidelity sensor data with realistic fault behaviors, making it a superior alternative to synthetic datasets for evaluating anomaly detection algorithms.
+
+The dataset comprises 35 CSV files organized into four folders: \texttt{valve1}, \texttt{valve2}, \texttt{anomaly-free}, and \texttt{other}. The \texttt{valve1} folder contains 16 files documenting various mechanical, electrical, and control-related failures, while the \texttt{valve2} folder includes 4 files with distinct fault scenarios. The \texttt{anomaly-free} folder provides baseline data for normal operations, and the \texttt{other} folder holds 14 additional sequences to diversify anomaly contexts. In total, the dataset spans approximately 25–30 hours of continuous system monitoring.
+
+\begin{figure}[H]
+\centerline{\includegraphics[width=\textwidth]{./figures/ACCELEROMETER_ONLY_valve2_0.csv_HIGH_RESs.pdf}} 
+\caption{Accelerometer RMS time series from SKAB valve2\_0.csv showing normal (blue) and anomalous (red) behavior across dual sensor channels, demonstrating the dataset's realistic fault characteristics.}
+\label{fig:accelerometer_data}
+\end{figure}
+
+Sensor data are sampled at 1 Hz across eight channels, including vibration (Accelerometer1RMS, Accelerometer2RMS), pressure, temperature, current, thermocouple, voltage, and volume flow rate. Each observation is timestamped and labeled with a binary anomaly indicator (0 = normal, 1 = anomalous), as well as change-point markers denoting fault onset \cite{katser2020skab}. Expert-annotated labels enable precise evaluation of both point anomalies and gradual drifts.
+
+SKAB is notable for its over 99\% data completeness, minimal noise, and negligible missing values (handled via forward fill), ensuring reliability for sensitive temporal modeling. The dataset addresses key industrial challenges such as label scarcity and class imbalance, and includes complex, subtle fault patterns that test a model's robustness and generalization capabilities. These properties make SKAB an appropriate testbed for validating real-time, spatiotemporal, and intent-aware anomaly detection models such as GTiS-Net.
+
+\subsection{Graph Construction Methodology}
+
+For graph-based modeling, sensor correlations are computed using Pearson correlation coefficients between each pair of sensors within 60-second sliding windows. A correlation threshold of 0.45 is applied to the absolute correlation values, where edges are created only when |correlation| > 0.45. This threshold selection balances graph sparsity with meaningful sensor relationships, ensuring that only statistically significant correlations contribute to the spatial graph structure. The resulting dynamic graphs capture evolving sensor dependencies that are crucial for detecting complex anomalies in industrial systems. 

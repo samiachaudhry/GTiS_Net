@@ -1,0 +1,14 @@
+\subsection*{Multi-Dataset Preprocessing}
+
+The preprocessing process begins with dataset selection from the SKAB database, which consists of four subsets: \texttt{valve1}, \texttt{valve2}, \texttt{anomaly-free}, and \texttt{other}. For model development, data from \texttt{valve1}, \texttt{valve2}, and \texttt{anomaly-free} are selected. These subsets cover a range of operational modes and fault scenarios, enabling comprehensive exposure to both normal and anomalous behaviors during training and evaluation. The \texttt{other} subset is excluded because it contains heterogeneous fault types that lack clear alignment with the standardized fault categories required for multi-label classification \cite{hu2025bi}. Including this subset could introduce label ambiguity or noise, potentially degrading model robustness and interpretability.
+
+Following dataset selection, the time-series sensor readings are standardized using Z-score normalization to ensure all features are on a comparable scale. Each sensor's data is transformed using the formula:
+\begin{equation}
+z = \frac{x - \mu}{\sigma}
+\label{eq:zscore}
+\end{equation}
+where $x$ is the original value, $\mu$ is the mean, and $\sigma$ is the standard deviation of the sensor's readings. This process scales all features to have zero mean and unit variance, which is essential for handling heterogeneous units such as volts, degrees Celsius, and bars.
+
+Normalization is applied independently to each sensor using NumPy and pandas operations. For constant-valued sensors, the standard deviation is set to 1 to avoid division-by-zero errors, thereby preserving the original values. Missing values are addressed using forward-fill interpolation before normalization to maintain temporal continuity.
+
+This approach maintains important statistical properties such as skewness and relative spacing while preserving outliers, which are critical for effective anomaly detection. Proper feature scaling improves model convergence and ensures balanced contribution from all sensors during training. Validation confirms that all features achieve zero mean and unit variance, maintaining consistent temporal and structural characteristics across all selected datasets. 

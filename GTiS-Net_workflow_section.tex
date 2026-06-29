@@ -1,0 +1,17 @@
+\section{GTiS-Net workflow}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\textwidth]{figures/Picture4.pdf}
+    \caption{Overview of the GTiS-Net workflow, showing the pipeline from SKAB dataset preprocessing and graph construction to hybrid SSL/SL training and real-time deployment. The model fuses temporal and spatial features via TAC and GAT modules, and uses policy control with user intent and feedback to adapt anomaly detection for industrial environments.}
+    \label{fig:gtis_workflow}
+\end{figure}
+
+The GTiS-Net framework implements a comprehensive anomaly detection pipeline designed for industrial IoT environments. The workflow begins with data preprocessing using multivariate sensor datasets from the SKAB repository, including valve1, valve2, and anomaly-free files. Time-series data is segmented into 60-step sliding windows to capture temporal dependencies, while dynamic graphs are constructed based on sensor correlation matrices to represent spatial relationships among sensors. This dual representation enables the simultaneous modeling of both temporal patterns and inter-sensor dependencies critical for industrial anomaly detection.
+
+The training strategy employs a hybrid learning approach combining self-supervised and supervised learning phases. During the self-supervised learning (SSL) phase, the model is pretrained on 100\% of unlabeled anomaly-free data to learn normal operational patterns without requiring manual annotations. Subsequently, supervised learning (SL) fine-tuning is performed using varying proportions of labeled data (10\%, 40\%, 60\%) to enhance anomaly discrimination capabilities. The dataset is partitioned into training, validation, and test sets using stratified sampling to maintain label distribution balance across all splits.
+
+The core architecture integrates two specialized modules: the Temporal Attention Convolution (TAC) module for extracting sequential features from time-series data, and the Graph Attention Network (GAT) module for learning spatial inter-sensor relationships. The outputs from both modules are fused through a cross-attention mechanism to generate comprehensive spatiotemporal representations. This integrated approach enables the model to detect anomalies that manifest across both temporal and spatial dimensions simultaneously.
+
+For real-time deployment, the trained model is deployed on edge computing devices such as NVIDIA Jetson platforms to enable low-latency, on-site inference. Upon detecting potential anomalies, the system executes automated alert actions through a dual-channel notification mechanism utilizing both SMS and email communications. All detection results and system responses are logged through a feedback module to maintain operational traceability and support continuous system improvement.
+
+The framework incorporates an adaptive Policy Control unit that continuously monitors key performance metrics including false alarm rates and miss detection rates. Based on predefined operational rules and user-defined intent parameters, the system dynamically adjusts detection thresholds to maintain optimal balance between detection sensitivity and system reliability. This closed-loop design enables the system to adapt to changing operational conditions while aligning detection priorities with specific industrial requirements and constraints. 
